@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECU</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: #0d1b2a;
+            border: 2px solid #4a4a4a;
+            border-radius: 10px;
+            padding: 15px;
+            width: 100%;
+            max-width: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: auto;
+        }
+
+        .top-panel {
+            display: flex;
+            justify-content: space-around;
+            background-color: #1c2541;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #3a506b;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .display-box {
+            background-color: #0b132b;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #3a506b;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .display-box label {
+            font-size: 0.8em;
+            color: #adb5bd;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .value-display {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #ffffff;
+            padding: 5px 0;
+        }
+
+        .green-text {
+            color: #28a745;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        .left-controls {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 0px;
+            background-color: #1c2541;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #3a506b;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .control-buttons-major {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+
+        }
+
+        .control-button {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #555;
+            border-radius: 10px;
+            cursor: pointer;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+
+        .control-button:active {
+            transform: scale(0.95);
+        }
+
+        .control-button:hover {
+            background-color: #0056b3;
+        }
+
+        .control-button svg {
+            display: block;
+            width: 60%;
+            height: 60%;
+        }
+
+        .start-btn {
+            background-color: #2a9d8f;
+            border-color: #2a9d8f;
+            /*margin-right: 10%;*/
+        }
+
+        .stop-btn {
+            background-color: #e76f51;
+            border-color: #e76f51;
+        }
+
+        .arrow-btn {
+            background-color: #007bff;
+            border-color: #007bff;
+
+            svg {
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+
+        .graph-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #000;
+            border: 1px solid #3a506b;
+            border-radius: 5px;
+            padding: 10px;
+            min-width: 0;
+            min-height: 0;
+            max-height: auto;
+            overflow: hidden;
+        }
+
+
+        .graph-header {
+            color: #ccc;
+            font-size: 0.9em;
+            text-align: center;
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+
+        #tensile-graph {
+            width: 100%;
+            height: 100%;
+            flex-grow: 1;
+        }
+
+        .right-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #1c2541;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #3a506b;
+            min-height: 0;
+        }
+
+        .connect-ble-container {
+            margin-bottom: 10px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .connect-ble-button {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+            padding: 10px 15px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .connect-ble-button:hover {
+            background-color: #218838;
+        }
+
+        .connect-ble-button.disconnect {
+            background-color: #dc3545;
+        }
+
+        .connect-ble-button.disconnect:hover {
+            background-color: #c82333;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 0px;
+            background-color: #0b132b;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #3a506b;
+            flex-shrink: 0;
+        }
+
+        .tab-button {
+            flex-grow: 1;
+            padding: 10px;
+            background-color: #0b132b;
+            color: #adb5bd;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .tab-button:hover {
+            background-color: #1c2541;
+        }
+
+        .tab-button.active {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Tab content container */
+        .tab-content-container {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-grow: 1;
+            min-height: 0;
+            border: 1px solid #3a506b;
+            border-radius: 5px;
+            background-color: #0b132b;
+        }
+
+        .tab-panel {
+            display: none;
+            padding: 15px;
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 100%;
+        }
+
+        .tab-panel.active {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Settings Group Styles */
+        .settings-group {
+            background-color: #1c2541;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #3a506b;
+        }
+
+        .settings-group h3 {
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #3a506b;
+            padding-bottom: 10px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .setting-item label {
+            color: #adb5bd;
+            font-size: 0.9em;
+            flex-basis: 120px;
+            white-space: nowrap;
+        }
+
+        .setting-item input[type="number"],
+        .setting-item select {
+            background-color: #0b132b;
+            color: #fff;
+            border: 1px solid #3a506b;
+            border-radius: 4px;
+            padding: 8px;
+            flex-grow: 1;
+            width: auto;
+            max-width: 200px;
+            min-width: 200px;
+            font-size: 1em;
+        }
+
+        .setting-item select option {
+            background-color: #0b132b;
+            color: #fff;
+        }
+
+        /* Action Buttons within settings groups */
+        .settings-group .action-buttons {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .settings-group .action-buttons button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            flex-grow: 1;
+            transition: background-color 0.2s;
+        }
+
+        .settings-group .action-buttons button:hover {
+            background-color: #0056b3;
+        }
+
+        .report-button-container {
+            margin: 1px 10px;
+            flex-shrink: 0;
+        }
+
+        .report-btn {
+            background-color: #fca311;
+            color: #000;
+            font-weight: bold;
+            font-size: 1.2em;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .report-btn:active {
+            background-color: #e89200;
+            transform: translateY(1px);
+        }
+
+        .results-display {
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #1c2541;
+            padding: 8px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .result-item label {
+            color: #adb5bd;
+            font-size: 0.9em;
+            flex-basis: 80px;
+        }
+
+        .result-value {
+            color: #fff;
+            font-weight: bold;
+            background-color: #000;
+            padding: 5px 10px;
+            border-radius: 3px;
+            min-width: 70px;
+            text-align: right;
+        }
+
+        .result-item span {
+            color: #adb5bd;
+            font-size: 0.9em;
+            min-width: 30px;
+            text-align: left;
+        }
+
+        /* --- Printable Report Styles --- */
+        #printable-report-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        #printable-report {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 800px;
+            margin: 20px auto;
+            font-size: 12pt;
+        }
+
+        #printable-report h1,
+        #printable-report h2,
+        #printable-report h3 {
+            color: #000;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        #printable-report .report-section {
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        #printable-report .report-section h3 {
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        #printable-report .report-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        #printable-report .report-item:last-child {
+            border-bottom: none;
+        }
+
+        #printable-report .report-label {
+            font-weight: bold;
+            flex-basis: 150px;
+        }
+
+        #printable-report .report-value {
+            flex-grow: 1;
+            text-align: right;
+        }
+
+        #report-chart-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Print specific styles */
+        @media print {
+
+            body>.container,
+            body>.menu-button {
+                display: none !important;
+            }
+
+            #printable-report-container {
+                display: block !important;
+                position: static !important;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                background-color: #fff !important;
+                color: #000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            #printable-report {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
+
+
+
+        .engine-control-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .control-label {
+            font-family: sans-serif;
+            /* Use a readable font */
+            font-size: 16px;
+            margin-bottom: 8px;
+            /* Adds space between the label and the switch */
+            color: #dce7de;
+            /* Darker text color */
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked+.slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+
+
+
+
+        /* --- Mobile-first responsive design for screens up to 768px --- */
+        @media (max-width: 768px) {
+            body {
+                align-items: flex-start;
+                padding: 5px;
+            }
+
+            .container {
+                padding: 5px;
+            }
+
+            .display-box {
+                min-width: auto;
+                width: 100%;
+                padding: 5px 10px;
+            }
+
+            .main-content {
+                flex-direction: column;
+            }
+
+            .left-controls,
+            .right-panel {
+                padding: 10px;
+                min-height: 0;
+            }
+
+            /* Ensure tab content is scrollable and not a fixed height */
+            .tab-content-container {
+                height: auto;
+                min-height: auto;
+            }
+
+            .tab-panel {
+                padding: 10px;
+            }
+
+            .tab-navigation {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .tab-button {
+                font-size: 0.8em;
+                padding: 8px 5px;
+            }
+
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .setting-item label {
+                flex-basis: auto;
+                margin-bottom: 5px;
+            }
+
+            .settings-group h3 {
+                font-size: 1.1em;
+            }
+
+            .results-display {
+                gap: 5px;
+            }
+
+            .result-item {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 5px;
+            }
+
+            .report-btn {
+                font-size: 1em;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="main-app-container">
+        <div class="top-panel">
+            <div class="display-box">
+                <label>EGT (°C)</label>
+                <div id="egt-display" class="value-display green-text">0</div>
+            </div>
+            <div class="display-box">
+                <label>HWT (°C)</label>
+                <div id="hwt-display" class="value-display green-text">0.0</div>
+            </div>
+            <div class="display-box">
+                <label>CWT (°C)</label>
+                <div id="cwt-display" class="value-display green-text">0.0</div>
+            </div>
+            <div class="display-box">
+                <label>IAT (°C)</label>
+                <div id="iat-display" class="value-display green-text">0.0</div>
+            </div>
+            <div class="display-box">
+                <label>MAP (bar)</label>
+                <div id="map-display" class="value-display green-text">0.00</div>
+            </div>
+            <div class="display-box">
+                <label>OIL (bar)</label>
+                <div id="oil-display" class="value-display green-text">0.0</div>
+            </div>
+            <div class="display-box">
+                <label>GAS (bar)</label>
+                <div id="gas-display" class="value-display green-text">0.0</div>
+            </div>
+            <div class="display-box">
+                <label>BAT (V)</label>
+                <div id="bat-display" class="value-display green-text">0.00</div>
+            </div>
+            <div class="display-box">
+                <label>VCC (V)</label>
+                <div id="vcc-display" class="value-display green-text">0.00</div>
+            </div>
+            <div class="display-box">
+                <label>TPS (deg)</label>
+                <div id="tps-display" class="value-display green-text">0.0</div>
+            </div>
+            <div class="display-box">
+                <label>REV (RPM)</label>
+                <div id="rpm-display" class="value-display green-text">0</div>
+            </div>
+            <div class="display-box">
+                <label>Power (KW)</label>
+                <div id="power-display" class="value-display green-text">0.0</div>
+            </div>
+            <div class="display-box">
+                <label>Lambda</label>
+                <div id="lambda-display" class="value-display green-text">0.00</div>
+            </div>
+            <div class="display-box">
+                <label>Time (sec)</label>
+                <div id="time-display" class="value-display green-text">0</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="left-controls">
+                <div class="control-buttons-major">
+                    <button id="start-button" class="control-button start-btn" title="Start">
+                        <svg viewBox="0 0 24 24" fill="white" width="50%" height="50%">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                    </button>
+                    <button id="stop-button" class="control-button stop-btn" title="Stop">
+                        <svg viewBox="0 0 24 24" fill="white" width="50%" height="50%">
+                            <path d="M6 6h12v12H6z" />
+                        </svg>
+                    </button>
+                    <div class="engine-control-container">
+                        <div class="control-label">Engine</div>
+                        <label class="switch">
+                            <input type="checkbox" id="engine-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div class="engine-control-container">
+                        <div class="control-label">Ignition</div>
+                        <label class="switch">
+                            <input type="checkbox" id="ign-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="graph-area">
+                    <div class="graph-header">Parameter / Time (msec)</div>
+                    <div>
+                        <canvas id="tensile-graph"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="connect-ble-container">
+                    <button id="connect-ble-btn" class="connect-ble-button">Connect</button>
+                </div>
+
+                <div class="tab-navigation">
+                    <button class="tab-button" data-target-panel="results-panel">Results</button>
+                    <button class="tab-button" data-target-panel="settings-panel">Settings</button>
+                </div>
+
+                <div class="tab-content-container">
+                    <div id="results-panel" class="tab-panel active">
+                        <div class="report-button-container">
+                            <button id="report-button" class="report-btn">REPORT</button>
+                        </div>
+
+                        <div class="results-display">
+                            <div class="result-item">
+                                <label>Tmax</label>
+                                <div id="tmax-value" class="result-value">0.00</div>
+                                <span>°C</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Tmin</label>
+                                <div id="tmin-value" class="result-value">0.00</div>
+                                <span>°C</span>
+                            </div>
+                            <div class="result-item">
+                                <label>delta T</label>
+                                <div id="deltat-value" class="result-value">0.00</div>
+                                <span>°C</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Duration</label>
+                                <div id="duration-value" class="result-value">0</div>
+                                <span>sec</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Heat</label>
+                                <div id="heat-value" class="result-value">0.000</div>
+                                <span>kJ</span>
+                            </div>
+                        </div>
+                        <div class="settings-group">
+                            <div class="action-buttons">
+                                <button id="save-chart-button">Save Chart</button>
+                                <button id="temperature-chart-button">Load Chart</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="settings-panel" class="tab-panel">
+                        <div class="settings-group">
+                            <h3>Engine Setting</h3>
+                            <div class="setting-item">
+                                <label for="tooth-type">Tooth Type</label>
+                                <select id="tooth-type">
+                                    <option value="0">58+2</option>
+                                    <option value="1">60-2</option>
+                                    <option value="2">5+1</option>
+                                    <option value="3">6+1</option>
+                                    <option value="4">6x2</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label for="rpm_setp">RPM Setpoint</label>
+                                <input type="number" id="rpm_setp" value="1500" step="1" min="100" max="3000">
+                            </div>
+                            <div class="setting-item">
+                                <label for="advance-angle">Advance Angle (deg)</label>
+                                <input type="number" id="advance-angle" value="15.0" step="0.1" min="0.0" max="30.0">
+                            </div>
+                            <div class="setting-item">
+                                <label for="ignition-power">Ignition Power (%)</label>
+                                <input type="number" id="ignition-power" value="100" step="1" min="0" max="100">
+                            </div>
+                            <div class="setting-item">
+                                <label for="warmup-duration">Warmup Duration (min)</label>
+                                <input type="number" id="warmup-duration" value="10" step="1" min="0" max="30">
+                            </div>
+                            <div class="setting-item">
+                                <label for="warmup-temp">Warmup Temp (°C)</label>
+                                <input type="number" id="warmup-temp" value="50" step="1" min="0" max="80">
+                            </div>
+                            <div class="setting-item">
+                                <label for="fan-temp">Fan Temp (°C)</label>
+                                <input type="number" id="fan-temp" value="80" step="1" min="0" max="100">
+                            </div>
+                            <div class="setting-item">
+                                <label for="alarm-temp">Alarm Temp (°C)</label>
+                                <input type="number" id="alarm-temp" value="90" step="1" min="1" max="100">
+                            </div>
+                        </div>
+                        <div class="settings-group">
+                            <div class="action-buttons">
+                                <button id="apply-setting-button">Apply Setting</button>
+                                <button id="save-setting-button">Save Setting</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="printable-report-container">
+        <div id="printable-report">
+            <h1>ECU Report</h1>
+            <p style="text-align: center; color: #666;" id="report-date-time"></p>
+
+            <div class="report-section">
+                <h3>Engine Setting</h3>
+                <div class="report-item">
+                    <span class="report-label">Heat Capacity:</span>
+                    <span class="report-value" id="report-rpm_setp"></span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h3>Chart Results</h3>
+                <div class="report-item">
+                    <span class="report-label">Tmax:</span>
+                    <span class="report-value" id="report-tmax-value"></span>
+                </div>
+                <div class="report-item">
+                    <span class="report-label">Tmin:</span>
+                    <span class="report-value" id="report-tmin-value"></span>
+                </div>
+                <div class="report-item">
+                    <span class="report-label">delta T:</span>
+                    <span class="report-value" id="report-deltat-value"></span>
+                </div>
+                <div class="report-item">
+                    <span class="report-label">Duration:</span>
+                    <span class="report-value" id="report-duration-value"></span>
+                </div>
+                <div class="report-item">
+                    <span class="report-label">Heat:</span>
+                    <span class="report-value" id="report-heat-value"></span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h3>Parameter / Time (msec) Chart</h3>
+                <img id="report-chart-image" alt="Temperature vs Time Graph">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const egtDisplay = document.getElementById('egt-display');
+            const hwtDisplay = document.getElementById('hwt-display');
+            const cwtDisplay = document.getElementById('cwt-display');
+            const iatDisplay = document.getElementById('iat-display');
+            const mapDisplay = document.getElementById('map-display');
+            const oilDisplay = document.getElementById('oil-display');
+            const gasDisplay = document.getElementById('gas-display');
+            const batDisplay = document.getElementById('bat-display');
+            const vccDisplay = document.getElementById('vcc-display');
+            const tpsDisplay = document.getElementById('tps-display');
+            const rpmDisplay = document.getElementById('rpm-display');
+            const powerDisplay = document.getElementById('power-display');
+            const lambdaDisplay = document.getElementById('lambda-display');
+            const timeDisplay = document.getElementById('time-display');
+
+            const tmaxValue = document.getElementById('tmax-value');
+            const tminValue = document.getElementById('tmin-value');
+            const detaTvalue = document.getElementById('deltat-value');
+            const durationValue = document.getElementById('duration-value');
+            const heatValue = document.getElementById('heat-value');
+
+            const startButton = document.getElementById('start-button');
+            const stopButton = document.getElementById('stop-button');
+            const engineToggle = document.getElementById('engine-toggle');
+            const ignToggle = document.getElementById('ign-toggle');
+            const reportButton = document.getElementById('report-button');
+
+            // --- Tab Elements ---
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const resultsPanel = document.getElementById('results-panel');
+            const settingsPanel = document.getElementById('settings-panel');
+
+            // --- Connect BLE Button ---
+            const connectBleButton = document.getElementById('connect-ble-btn');
+
+            // --- Settings inputs ---
+            const toothTypeInput = document.getElementById('tooth-type');
+            const rpmSetpInput = document.getElementById('rpm_setp');
+            const advanceDegInput = document.getElementById('advance-angle');
+            const ignPowerInput = document.getElementById('ignition-power');
+            const warmupDurationInput = document.getElementById('warmup-duration');
+            const warmupTempInput = document.getElementById('warmup-temp');
+            const fanTempInput = document.getElementById('fan-temp');
+            const alarmTempInput = document.getElementById('alarm-temp');
+
+
+            const applySettingButton = document.getElementById('apply-setting-button');
+            const saveSettingButton = document.getElementById('save-setting-button');
+
+
+            // --- Chart Data Management Buttons ---
+            const saveChartButton = document.getElementById('save-chart-button');
+            const loadChartButton = document.getElementById('temperature-chart-button');
+
+
+            // --- Printable Report elements ---
+            const mainAppContainer = document.getElementById('main-app-container');
+            const printableReportContainer = document.getElementById('printable-report-container');
+            const reportDateTime = document.getElementById('report-date-time');
+            const reportHeatCapacity = document.getElementById('report-rpm_setp');
+
+            const reporttmaxValue = document.getElementById('report-tmax-value');
+            const reporttminValue = document.getElementById('report-tmin-value');
+            const reportdetaTvalue = document.getElementById('report-deltat-value');
+            const reportdurationValue = document.getElementById('report-duration-value');
+            const reportheatValue = document.getElementById('report-heat-value');
+            const reportChartImage = document.getElementById('report-chart-image');
+            const DEVICE_NAME = 'ECU';
+            const SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214";
+            const RX_CHAR_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214";
+            const TX_CHAR_UUID = "19b10002-e8f2-537e-4f6c-d104768a1214";
+            //----------------------------------------------------------------------------------------------  
+            const sampleCount = 236;
+            let chartData = Array(sampleCount).fill(0);
+
+            const ctx = document.getElementById('tensile-graph')?.getContext('2d');
+            let ecuChart;
+            if (ctx) {
+                ecuChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({ length: sampleCount }, (_, i) => i),
+                        datasets: [{
+                            label: 'Signal',
+                            data: chartData,
+                            borderColor: 'lime',
+                            borderWidth: 1,
+                            pointRadius: 0,
+                            tension: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        animation: false,
+                        scales: {
+                            x: { display: false },
+                            y: {
+                                min: 20000,
+                                max: 30000
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            //----------------------------------------------------------------------------------------------  
+            const BUZZER_BEEP_CMD = 0x80;
+            const GET_SETTING_CMD = 0x81;
+            const SAVE_SETTING_CMD = 0x82;
+            let isCharting = false;
+            let isWebBLEConnected = false;
+            let deviceSerialNo = 0;
+            let bleDevice;
+            let txCharacteristic;
+            let time = 0;
+
+            let engineSetting = {
+                toothType: parseInt(toothTypeInput.value),
+                rpmSetp: parseInt(rpmSetpInput.value),
+                advanceDegX10: parseInt(advanceDegInput.value * 10),
+                ignPower: parseInt(ignPowerInput.value),
+                warmupDuration: parseInt(warmupDurationInput.value),
+                warmupTemp: parseInt(warmupTempInput.value),
+                fanTemp: parseInt(fanTempInput.value),
+                alarmTemp: parseInt(alarmTempInput.value)
+            };
+
+            // Update parameters when inputs change
+            toothTypeInput.addEventListener('change', () => engineSetting.toothType = parseInt(toothTypeInput.value));
+            rpmSetpInput.addEventListener('change', () => engineSetting.rpmSetp = parseInt(rpmSetpInput.value));
+            advanceDegInput.addEventListener('change', () => engineSetting.advanceDegX10 = parseInt(advanceDegInput.value * 10));
+            ignPowerInput.addEventListener('change', () => engineSetting.ignPower = parseInt(ignPowerInput.value));
+            warmupDurationInput.addEventListener('change', () => engineSetting.warmupDuration = parseInt(warmupDurationInput.value));
+            warmupTempInput.addEventListener('change', () => engineSetting.warmupTemp = parseInt(warmupTempInput.value))
+            fanTempInput.addEventListener('change', () => engineSetting.fanTemp = parseInt(fanTempInput.value))
+            alarmTempInput.addEventListener('change', () => engineSetting.alarmTemp = parseInt(alarmTempInput.value));
+            ;
+            //----------------------------------------------------------------------------------------------  
+            function showTab(panelId) {
+                tabButtons.forEach(button => button.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+                const activeButton = document.querySelector(`.tab-button[data-target-panel="${panelId}"]`);
+                if (activeButton) activeButton.classList.add('active');
+                const targetPanel = document.getElementById(panelId);
+                if (targetPanel) targetPanel.classList.add('active');
+            }
+            //----------------------------------------------------------------------------------------------  
+            tabButtons.forEach(button => {
+                button.addEventListener('click', (event) => {
+                    showTab(event.target.dataset.targetPanel);
+                });
+            });
+            showTab('results-panel');
+            //----------------------------------------------------------------------------------------------  
+            async function connectToBleDevice() {
+                try {
+                    console.log('Requesting Bluetooth Device...');
+                    bleDevice = await navigator.bluetooth.requestDevice({
+                        filters: [{ name: DEVICE_NAME }],
+                        optionalServices: [SERVICE_UUID]
+                    });
+
+                    console.log('Connecting to GATT Server...');
+                    const server = await bleDevice.gatt.connect();
+
+                    console.log('Getting Service...');
+                    const service = await server.getPrimaryService(SERVICE_UUID);
+
+                    console.log('Getting RX Characteristic (for receiving data)...');
+                    const rxCharacteristic = await service.getCharacteristic(RX_CHAR_UUID);
+                    rxCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+                    await rxCharacteristic.startNotifications();
+
+                    console.log('Getting TX Characteristic (for sending data)...');
+                    txCharacteristic = await service.getCharacteristic(TX_CHAR_UUID);
+
+                    console.log('✅ Connected!');
+                    bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                    isWebBLEConnected = true;
+                    updateConnectButtonUI();
+                    sendCmd(GET_SETTING_CMD);
+                } catch (error) {
+                    console.error('Connection failed!', error);
+                    isWebBLEConnected = false;
+                    updateConnectButtonUI();
+                }
+            }
+            //----------------------------------------------------------------------------------------------  
+            // 300ms
+            function handleNotifications(event) {
+                const value = event.target.value;
+                const dataView = new DataView(value.buffer);
+                console.log(dataView.byteLength);
+                if (dataView.byteLength == 512) {
+                    const lastWord = dataView.getUint16(510, true);
+                    const packetSize = (lastWord & 0x7F);
+                    const oscopSize = 255 - packetSize;
+                    let packetByteIndex = oscopSize * 2;
+                    timeDisplay.textContent = packetSize;
+                    if ((lastWord & 0x80) == 0) {
+                        if (packetSize > 10) {
+                            const egt = dataView.getUint16(packetByteIndex, true);
+                            egtDisplay.textContent = egt;
+                            packetByteIndex += 2;
+                            const hwt = dataView.getInt16(packetByteIndex, true);
+                            hwtDisplay.textContent = (hwt * 0.1).toFixed(1);
+                            packetByteIndex += 2;
+                            const cwt = dataView.getInt16(packetByteIndex, true);
+                            cwtDisplay.textContent = (cwt * 0.1).toFixed(1);
+                            packetByteIndex += 2;
+                            const iat = dataView.getInt16(packetByteIndex, true);
+                            iatDisplay.textContent = (iat * 0.1).toFixed(1);
+                            packetByteIndex += 2;
+                            const map = dataView.getUint16(packetByteIndex, true);
+                            mapDisplay.textContent = (map * 0.01).toFixed(2);
+                            packetByteIndex += 2;
+                            const oil = dataView.getUint16(packetByteIndex, true);
+                            oilDisplay.textContent = (oil * 0.01).toFixed(2);
+                            packetByteIndex += 2;
+                            const gas = dataView.getUint16(packetByteIndex, true);
+                            gasDisplay.textContent = (gas * 0.01).toFixed(2);
+                            packetByteIndex += 2;
+                            const vbat = dataView.getUint16(packetByteIndex, true);
+                            batDisplay.textContent = (vbat * 0.01).toFixed(2);
+                            packetByteIndex += 2;
+                            const vcc = dataView.getUint16(packetByteIndex, true);
+                            vccDisplay.textContent = (vcc * 0.01).toFixed(2);
+                            packetByteIndex += 2;
+                            const tps = dataView.getUint16(packetByteIndex, true);
+                            tpsDisplay.textContent = (tps * 0.1).toFixed(1);
+                            packetByteIndex += 2;
+                            const rpm = dataView.getUint16(packetByteIndex, true);
+                            rpmDisplay.textContent = rpm;
+                            packetByteIndex += 2;
+                            const power = dataView.getUint16(packetByteIndex, true);
+                            powerDisplay.textContent = (power * 0.01).toFixed(2);
+                            packetByteIndex += 2;
+                            const lambda = dataView.getUint16(packetByteIndex, true);
+                            lambdaDisplay.textContent = (lambda * 0.01).toFixed(2);
+                            //
+                            if (isCharting) {
+                                if (ecuChart) {
+                                    for (let i = 0; i < sampleCount; i++) {
+                                        chartData[i] = dataView.getUint16(i * 2, true);
+                                    }
+                                    //ecuChart.data.datasets[0].data = [...chartData];
+                                    ecuChart.update('none');
+                                }
+                            }
+                        }
+                    } else {
+                        if (packetSize > 10) {
+                            engineSetting.toothType = dataView.getUint16(packetByteIndex, true);
+                            toothTypeInput.value = engineSetting.toothType;
+                            packetByteIndex += 2;
+                            engineSetting.rpmSetp = dataView.getUint16(packetByteIndex, true);
+                            rpmSetpInput.value = engineSetting.rpmSetp;
+                            packetByteIndex += 2;
+                            engineSetting.advanceDegX10 = dataView.getUint16(packetByteIndex, true);
+                            advanceDegInput.value = (engineSetting.advanceDegX10 * 0.1).toFixed(1);
+                            packetByteIndex += 2;
+                            engineSetting.ignPower = dataView.getUint16(packetByteIndex, true);
+                            ignPowerInput.value = engineSetting.ignPower;
+                            packetByteIndex += 2;
+                            engineSetting.warmupDuration = dataView.getUint16(packetByteIndex, true);
+                            warmupDurationInput.value = engineSetting.warmupDuration;
+                            packetByteIndex += 2;
+                            engineSetting.warmupTemp = dataView.getUint16(packetByteIndex, true);
+                            warmupTempInput.value = engineSetting.warmupTemp;
+                            packetByteIndex += 2;
+                            engineSetting.fanTemp = dataView.getUint16(packetByteIndex, true);
+                            fanTempInput.value = engineSetting.fanTemp;
+                            packetByteIndex += 2;
+                            engineSetting.alarmTemp = dataView.getUint16(packetByteIndex, true);
+                            alarmTempInput.value = engineSetting.alarmTemp;
+                            deviceSerialNo = (lastWord >> 8);
+                        }
+                    }
+                }
+            }
+            //----------------------------------------------------------------------------------------------  
+            async function sendCmd(cmd) {
+                if (!isWebBLEConnected || !txCharacteristic) {
+                    console.error("Not connected or TX Characteristic not available.");
+                    return;
+                }
+                const buffer = new Uint8Array(1);
+                buffer[0] = cmd;
+                try {
+                    await txCharacteristic.writeValueWithoutResponse(buffer);
+                    console.log(`Sent command: ${cmd}`);
+                } catch (error) {
+                    console.error("Failed to send command:", error);
+                }
+            }
+            //----------------------------------------------------------------------------------------------  
+            async function sendData() {
+                if (!isWebBLEConnected || !txCharacteristic) {
+                    console.error("Not connected or TX Characteristic not available.");
+                    return;
+                }
+                const buffer = new Uint8Array(4);
+                buffer[0] = 0;
+                buffer[1] = 0;
+                try {
+                    await txCharacteristic.writeValueWithoutResponse(buffer);
+                    console.log(`Sent command: ${buffer}`);
+                } catch (error) {
+                    console.error("Failed to send command:", error);
+                }
+            }
+            //----------------------------------------------------------------------------------------------  
+            function onDisconnected() {
+                console.log('Device disconnected.');
+                isWebBLEConnected = false;
+                txCharacteristic = null;
+                updateConnectButtonUI();
+            }
+            //----------------------------------------------------------------------------------------------  
+            function disconnectFromBleDevice() {
+                if (isCharting) {
+                    stopChart();
+                }
+                if (bleDevice && bleDevice.gatt.connected) {
+                    bleDevice.gatt.disconnect();
+                }
+            }
+            //----------------------------------------------------------------------------------------------  
+            function updateConnectButtonUI() {
+                if (isWebBLEConnected) {
+                    connectBleButton.textContent = 'Disconnect';
+                    connectBleButton.classList.add('disconnect');
+                } else {
+                    connectBleButton.textContent = 'Connect';
+                    connectBleButton.classList.remove('disconnect');
+                }
+            }
+            //----------------------------------------------------------------------------------------------  
+            startButton.addEventListener('click', () => {
+                if (!isWebBLEConnected) {
+                    alert("Please connect to the BLE device first.");
+                    return;
+                }
+                if (isCharting) return;
+
+                time = 0;
+                console.log('Chart Started');
+                /*
+                tmaxValue.textContent = '0.0';
+                tminValue.textContent = '0.000';
+                detaTvalue.textContent = '0.0';
+                durationValue.textContent = '0.000';
+                heatValue.textContent = '0.000';
+                */
+                if (ecuChart) {
+                    //ecuChart.data.labels = [];
+                    //ecuChart.data.datasets[0].data = [];
+                    //ecuChart.update();
+                    isCharting = true;
+                }
+            });
+            //----------------------------------------------------------------------------------------------  
+            function stopChart() {
+                if (!isCharting) {
+                    return;
+                }
+                isCharting = false;
+                console.log('Chart Stopped');
+            }
+            //----------------------------------------------------------------------------------------------  
+            stopButton.addEventListener('click', stopChart);
+            //----------------------------------------------------------------------------------------------  
+            ignToggle.addEventListener('change', () => {
+                if (isCharting) return;
+                if (ignToggle.checked) {
+                    sendData();
+                } else {
+                    sendData();
+                }
+            });
+
+            engineToggle.addEventListener('change', () => {
+                if (isCharting) return;
+                if (engineToggle.checked) {
+                    sendData();
+                } else {
+                    sendData();
+                }
+            });
+            //----------------------------------------------------------------------------------------------        
+            reportButton.addEventListener('click', () => {
+                reportDateTime.textContent = new Date().toLocaleString();
+                reportHeatCapacity.textContent = `${engineSetting.rpmSetp} kJ/°C`;
+
+                reporttmaxValue.textContent = `${tmaxValue.textContent} °C`;
+                reporttminValue.textContent = `${tminValue.textContent} °C`;
+                reportdetaTvalue.textContent = `${detaTvalue.textContent} °C`;
+                reportdurationValue.textContent = `${durationValue.textContent} sec`;
+                reportheatValue.textContent = `${heatValue.textContent} kJ`;
+
+                if (ecuChart) {
+                    const originalWidth = ecuChart.canvas.width;
+                    const originalHeight = ecuChart.canvas.height;
+                    ecuChart.resize(800, 400);
+                    reportChartImage.src = ecuChart.toBase64Image();
+                    ecuChart.resize(originalWidth, originalHeight);
+                } else {
+                    reportChartImage.src = '';
+                }
+
+                mainAppContainer.style.display = 'none';
+                printableReportContainer.style.display = 'block';
+
+                window.print();
+
+                const afterPrint = () => {
+                    printableReportContainer.style.display = 'none';
+                    mainAppContainer.style.display = 'flex';
+                    window.removeEventListener('afterprint', afterPrint);
+                };
+                window.addEventListener('afterprint', afterPrint);
+            });
+            //----------------------------------------------------------------------------------------------
+            applySettingButton.addEventListener('click', () => {
+                sendCmd(BUZZER_BEEP_CMD);
+            });
+            saveSettingButton.addEventListener('click', () => {
+                sendCmd(SAVE_SETTING_CMD);
+            });
+            //----------------------------------------------------------------------------------------------
+            saveChartButton.addEventListener('click', () => {
+                if (ecuChart && ecuChart.data.labels.length > 0) {
+                    const chartDataToSave = {
+                        labels: ecuChart.data.labels,
+                        data: ecuChart.data.datasets[0].data
+                    };
+                    localStorage.setItem('savedCalorimeterChartData', JSON.stringify(chartDataToSave));
+                    alert('Chart data saved successfully!');
+                } else {
+                    alert('No chart data to save.');
+                }
+            });
+            //----------------------------------------------------------------------------------------------
+            loadChartButton.addEventListener('click', () => {
+                const savedData = localStorage.getItem('savedCalorimeterChartData');
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    if (ecuChart) {
+                        ecuChart.data.labels = parsedData.labels;
+                        ecuChart.data.datasets[0].data = parsedData.data;
+                        ecuChart.update();
+                        alert('Chart data loaded successfully!');
+                        durationValue.textContent = ecuChart.data.datasets[0].data.length - 1;
+                        tempMin = ecuChart.data.datasets[0].data[0];
+                        tempMax = ecuChart.data.datasets[0].data[ecuChart.data.datasets[0].data.length - 1];
+                        tmaxValue.textContent = tempMax.toFixed(2);
+                        tminValue.textContent = tempMin.toFixed(2);
+                        detaTvalue.textContent = (tempMax - tempMin).toFixed(2);
+                        heatValue.textContent = ((tempMax - tempMin) * engineSetting.rpmSetp).toFixed(3);
+                    }
+                } else {
+                    alert('No saved chart data found.');
+                }
+            });
+            //----------------------------------------------------------------------------------------------
+            connectBleButton.addEventListener('click', async () => {
+                if (isWebBLEConnected) {
+                    disconnectFromBleDevice();
+                } else {
+                    await connectToBleDevice();
+                }
+            });
+            //----------------------------------------------------------------------------------------------
+            updateConnectButtonUI();
+        });
+    </script>
+</body>
+
+</html>
