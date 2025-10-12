@@ -770,21 +770,6 @@
                             <path d="M6 6h12v12H6z" />
                         </svg>
                     </button>
-                    <div class="engine-control-container">
-                        <div class="control-label">Engine</div>
-                        <label class="switch">
-                            <input type="checkbox" id="engine-toggle">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-
-                    <div class="engine-control-container">
-                        <div class="control-label">Ignition</div>
-                        <label class="switch">
-                            <input type="checkbox" id="ign-toggle">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
                 </div>
                 <div class="graph-area">
                     <div class="graph-header">Parameter / Time (msec)</div>
@@ -905,11 +890,11 @@
                             </div>
                             <div class="setting-item">
                                 <label for="advance-angle">Advance Angle (deg)</label>
-                                <input type="number" id="advance-angle" value="15.0" step="0.1" min="0.0" max="30.0">
+                                <input type="number" id="advance-angle" value="15.0" step="0.1" min="0.0" max="90.0">
                             </div>
                             <div class="setting-item">
                                 <label for="ignition-power">Ignition Power (%)</label>
-                                <input type="number" id="ignition-power" value="100" step="1" min="0" max="100">
+                                <input type="number" id="ignition-power" value="100" step="1" min="0" max="200">
                             </div>
                             <div class="setting-item">
                                 <label for="warmup-duration">Warmup Duration (min)</label>
@@ -1011,8 +996,6 @@
 
             const startButton = document.getElementById('start-button');
             const stopButton = document.getElementById('stop-button');
-            const engineToggle = document.getElementById('engine-toggle');
-            const ignToggle = document.getElementById('ign-toggle');
             const reportButton = document.getElementById('report-button');
 
             // --- Tab Elements ---
@@ -1425,24 +1408,6 @@
                     isCharting = false;
                     stopButton.style.visibility="hidden";
                     startButton.style.visibility="visible";
-                }
-            });
-            //----------------------------------------------------------------------------------------------  
-            ignToggle.addEventListener('change', () => {
-                if (isCharting) return;
-                if (ignToggle.checked) {
-                    //sendData();
-                } else {
-                    //sendData();
-                }
-            });
-
-            engineToggle.addEventListener('change', () => {
-                if (isCharting) return;
-                if (engineToggle.checked) {
-                    //sendData();
-                } else {
-                    //sendData();
                 }
             });
             //----------------------------------------------------------------------------------------------        
