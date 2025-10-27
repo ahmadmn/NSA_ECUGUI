@@ -583,7 +583,13 @@
                             <span class="slider round"></span>
                         </label>
                     </div>
-
+                    <div class="setting-item">
+                        <select id="zoom-mode">
+                            <option value="x">x</option>
+                            <option value="y">y</option>
+                            <option value="xy">xy</option>
+                        </select>
+                    </div>
                     <div class="setting-item">
                         <select id="state-display">
                             <option value="0">INIT</option>
@@ -617,10 +623,6 @@
                     <div id="commands-panel" class="tab-panel active">
                         <div class="settings-group">
                             <h3>Engine Commands</h3>
-                            <div class="setting-item">
-                                <label for="man-tps-setp">TPS Setpoint (deg)</label>
-                                <input type="number" id="man-tps-setp" value="0.0" step="0.1" min="0.0" max="90.0">
-                            </div>
                         </div>
                     </div>
 
@@ -678,10 +680,6 @@
                                 </select>
                             </div>
                             <div class="setting-item">
-                                <label for="advance-angle">Advance Angle (deg)</label>
-                                <input type="number" id="advance-angle" value="18.0" step="0.1" min="0.0" max="30.0">
-                            </div>
-                            <div class="setting-item">
                                 <label for="ignition-power">Ignition Power (%)</label>
                                 <input type="number" id="ignition-power" value="100" step="1" min="0" max="100">
                             </div>
@@ -706,8 +704,12 @@
                                 <input type="number" id="rpm-max" value="1600" step="1" min="0" max="1700">
                             </div>
                             <div class="setting-item">
-                                <label for="alarm-temp">Alarm Temp (°C)</label>
-                                <input type="number" id="alarm-temp" value="90" step="1" min="1" max="100">
+                                <label for="advance-angle1200">Advance 1200 (deg)</label>
+                                <input type="number" id="advance-angle1200" value="5.0" step="0.1" min="0.0" max="30.0">
+                            </div>
+                            <div class="setting-item">
+                                <label for="advance-angle1600">Advance 1600 (deg)</label>
+                                <input type="number" id="advance-angle1600" value="5.0" step="0.1" min="0.0" max="30.0">
                             </div>
                         </div>
                     </div>
@@ -715,7 +717,10 @@
                     <div id="speed-panel" class="tab-panel">
                         <div class="settings-group">
                             <h3>Speed PID</h3>
-
+                            <div class="setting-item">
+                                <label for="sim-tps-setp">Sim Speed Setpoint (rpm)</label>
+                                <input type="number" id="sim-rpm-setp" value="0" step="1" min="0" max="1600">
+                            </div>
                             <div class="setting-item">
                                 <label for="speed-kp">Speed Kp</label>
                                 <input type="number" id="speed-kp" value="2500" step="1" min="1" max="10000">
@@ -729,12 +734,16 @@
                                 <input type="number" id="speed-kd" value="2500" step="1" min="1" max="10000">
                             </div>
                             <h3>TRT PID</h3>
-                                                        <div class="setting-item">
+                            <div class="setting-item">
                                 <label for="feedback-type">Feedback Type</label>
                                 <select id="feedback-type">
                                     <option value="0">TPS</option>
                                     <option value="1">TRT</option>
                                 </select>
+                            </div>
+                            <div class="setting-item">
+                                <label for="man-tps-setp">Man TPS Setpoint (deg)</label>
+                                <input type="number" id="man-tps-setp" value="0.0" step="0.1" min="0.0" max="90.0">
                             </div>
                             <div class="setting-item">
                                 <label for="trt-kp">Throttle Kp</label>
@@ -785,6 +794,7 @@
             // --- Chart Buttons and Toggle Elements ---
             const startButton = document.getElementById('start-button');
             const stopButton = document.getElementById('stop-button');
+
             const engineToggle = document.getElementById('engine-toggle');
 
             // --- Tab Elements ---
@@ -798,16 +808,16 @@
 
             // --- Settings inputs ---
             const chartSelectInput = document.getElementById('chart-select');
-            const toothTypeInput = document.getElementById('tooth-type');
-            const advanceDegX10Input = document.getElementById('advance-angle');
+            const toothTypeInput = document.getElementById('tooth-type');            
             const ignPowerInput = document.getElementById('ignition-power');
             const rpmSetpInput = document.getElementById('rpm-setp');
             const rpmMaxInput = document.getElementById('rpm-max');
             const rpmWarmUpInput = document.getElementById('rpm-warmup');
             const warmupDurationInput = document.getElementById('warmup-duration');
             const startTpsDegInput = document.getElementById('start-tps-deg');
-            const alarmTempInput = document.getElementById('alarm-temp');
-            //
+            const advance1200X10Input = document.getElementById('advance-angle1200');
+            const advance1600X10Input = document.getElementById('advance-angle1600');
+            // --- Speed PID inputs ---
             const speedKpInput = document.getElementById('speed-kp');
             const speedKiInput = document.getElementById('speed-ki');
             const speedKdInput = document.getElementById('speed-kd');
@@ -817,6 +827,7 @@
 
             // --- Commands inputs ---
             const manTpsSetpInput = document.getElementById('man-tps-setp');
+            const simSpeedSetpInput = document.getElementById('sim-rpm-setp');
 
             // --- Setting Management Buttons ---
             const applySettingButton = document.getElementById('apply-setting-button');
@@ -867,7 +878,7 @@
                                     pinch: {
                                         enabled: true
                                     },
-                                    mode: "y"
+                                    mode: "x"
                                 }
                             }
                         }
@@ -876,6 +887,15 @@
             }
             document.getElementById('ecu-graph').addEventListener('click', () => {
                 ecuChart.resetZoom();
+            });
+            document.getElementById('zoom-mode').addEventListener('change', function () {
+                if (ecuChart) {
+                    const mode = this.value;
+                    ecuChart.options.plugins.zoom.zoom.mode = mode;
+                    if (!isCharting) {
+                        ecuChart.update();
+                    }
+                }
             });
             //----------------------------------------------------------------------------------------------  
             const BUZZER_BEEP_CMD = 0x80;
@@ -897,15 +917,15 @@
 
             let engineSetting = {
                 chartSelect: parseInt(chartSelectInput.value),
-                toothType: parseInt(toothTypeInput.value),
-                advanceDegX10: parseInt(advanceDegX10Input.value * 10),
+                toothType: parseInt(toothTypeInput.value),                
                 ignPower: parseInt(ignPowerInput.value),
                 startTpsDegX10: parseInt(startTpsDegInput.value * 10),
                 warmupDuration: parseInt(warmupDurationInput.value),
                 rpmWarmUp: parseInt(rpmWarmUpInput.value),
                 rpmSetp: parseInt(rpmSetpInput.value),
                 rpmMax: parseInt(rpmMaxInput.value),
-                alarmTemp: parseInt(alarmTempInput.value),
+                advance1200X10: parseInt(advance1200X10Input.value * 10),
+                advance1600X10: parseInt(advance1600X10Input.value * 10),
                 speedKp: parseInt(speedKpInput.value),
                 speedKi: parseInt(speedKiInput.value),
                 speedKd: parseInt(speedKdInput.value),
@@ -927,15 +947,15 @@
 
             // Update Settings when inputs change
             chartSelectInput.addEventListener('change', () => engineSetting.chartSelect = parseInt(chartSelectInput.value));
-            toothTypeInput.addEventListener('change', () => engineSetting.toothType = parseInt(toothTypeInput.value));
-            advanceDegX10Input.addEventListener('change', () => engineSetting.advanceDegX10 = parseInt(advanceDegX10Input.value * 10));
+            toothTypeInput.addEventListener('change', () => engineSetting.toothType = parseInt(toothTypeInput.value));            
             ignPowerInput.addEventListener('change', () => engineSetting.ignPower = parseInt(ignPowerInput.value));
             startTpsDegInput.addEventListener('change', () => engineSetting.startTpsDegX10 = parseInt(startTpsDegInput.value * 10));
             warmupDurationInput.addEventListener('change', () => engineSetting.warmupDuration = parseInt(warmupDurationInput.value));
             rpmWarmUpInput.addEventListener('change', () => engineSetting.rpmWarmUp = parseInt(rpmWarmUpInput.value));
             rpmSetpInput.addEventListener('change', () => engineSetting.rpmSetp = parseInt(rpmSetpInput.value));
             rpmMaxInput.addEventListener('change', () => engineSetting.rpmMax = parseInt(rpmMaxInput.value));
-            alarmTempInput.addEventListener('change', () => engineSetting.alarmTemp = parseInt(alarmTempInput.value));
+            advance1200X10Input.addEventListener('change', () => engineSetting.advance1200X10 = parseInt(advance1200X10Input.value * 10));
+            advance1600X10Input.addEventListener('change', () => engineSetting.advance1600X10 = parseInt(advance1600X10Input.value * 10));
             speedKpInput.addEventListener('change', () => engineSetting.speedKp = parseInt(speedKpInput.value));
             speedKiInput.addEventListener('change', () => engineSetting.speedKi = parseInt(speedKiInput.value));
             speedKdInput.addEventListener('change', () => engineSetting.speedKd = parseInt(speedKdInput.value));
@@ -944,7 +964,6 @@
             trtKdInput.addEventListener('change', () => engineSetting.trtKd = parseInt(trtKdInput.value));
             // Update Commands when inputs change
             manTpsSetpInput.addEventListener('change', () => {
-                //engineCommand.manTpsSetpX10 = parseInt(manTpsSetpInput.value * 10);
                 if (sendLength == 0) {
                     const cmdVal = parseInt(manTpsSetpInput.value * 10);
                     sendBuff[0] = (64 + 2);        // command index
@@ -953,6 +972,17 @@
                     sendLength = 3;
                 }
             });
+            simSpeedSetpInput.addEventListener('change', () => {
+                if (sendLength == 0) {
+                    const cmdVal = parseInt(simSpeedSetpInput.value);
+                    sendBuff[0] = (64 + 3);        // command index
+                    sendBuff[1] = (cmdVal >> 8);   // high byte
+                    sendBuff[2] = cmdVal & 0xFF;   // low byte  
+                    sendLength = 3;
+                }
+            });
+            //---------------------------------------------------------------------------------------------- 
+
             //----------------------------------------------------------------------------------------------  
             function showTab(panelId) {
                 tabButtons.forEach(button => button.classList.remove('active'));
@@ -998,6 +1028,7 @@
                     updateConnectButtonUI();
                     stopButton.style.visibility = "hidden";
                     startButton.style.visibility = "visible";
+                    isCharting = false;
                     sendCmd(GET_SETTING_CMD); //This Command Start Communication!
                 } catch (error) {
                     console.error('Connection failed!', error);
@@ -1008,7 +1039,6 @@
             //----------------------------------------------------------------------------------------------  
             // 300ms
             function handleNotifications(event) {
-
                 if (sendLength > 0) {
                     try {
                         // Send only the used portion
@@ -1100,15 +1130,15 @@
                                 packetByteIndex += 2;
                             }
                             chartSelectInput.value = engineSetting.chartSelect;
-                            toothTypeInput.value = engineSetting.toothType;
-                            advanceDegX10Input.value = (engineSetting.advanceDegX10 * 0.1).toFixed(1);
+                            toothTypeInput.value = engineSetting.toothType;                            
                             ignPowerInput.value = engineSetting.ignPower;
                             rpmSetpInput.value = engineSetting.rpmSetp;
                             rpmMaxInput.value = engineSetting.rpmMax;
                             rpmWarmUpInput.value = engineSetting.rpmWarmUp;
                             warmupDurationInput.value = engineSetting.warmupDuration;
                             startTpsDegInput.value = (engineSetting.startTpsDegX10 * 0.1).toFixed(1);
-                            alarmTempInput.value = engineSetting.alarmTemp;
+                            advance1200X10Input.value = (engineSetting.advance1200X10 * 0.1).toFixed(1);
+                            advance1600X10Input.value = (engineSetting.advance1600X10 * 0.1).toFixed(1);
                             speedKpInput.value = engineSetting.speedKp;
                             speedKiInput.value = engineSetting.speedKi;
                             speedKdInput.value = engineSetting.speedKd;
@@ -1188,10 +1218,7 @@
             });
             //----------------------------------------------------------------------------------------------  
             stopButton.addEventListener('click', () => {
-                if (!isWebBLEConnected) {
-                    alert("Please connect to the BLE device first.");
-                    return;
-                }
+
                 if (!isCharting) return;
 
                 //console.log('Chart Stopped');
