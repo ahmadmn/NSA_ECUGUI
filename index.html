@@ -3,7 +3,6 @@
 
 <head>
     <meta charset="UTF-8">
-    <!meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>ECU</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -181,6 +180,8 @@
             width: 100%;
             height: 100%;
             flex-grow: 1;
+            touch-action: none;
+            /* allow Chart.js to capture pinch gestures */
         }
 
         .right-panel {
@@ -841,7 +842,7 @@
             const PACKET_SAMPLE_COUNT = 255;    //256 sample; last sample used for size and Device ID
             const PARAM_COUNT = 19;
             //----------------------------------------------------------------------------------------------  
-            const chartPointCount = (PACKET_SAMPLE_COUNT - PARAM_COUNT)*10;
+            const chartPointCount = (PACKET_SAMPLE_COUNT - PARAM_COUNT) * 10;
             let chartData = Array(chartPointCount).fill(0);
             const ctx = document.getElementById('ecu-graph')?.getContext('2d');
             let ecuChart;
@@ -897,6 +898,10 @@
                                 display: false
                             },
                             zoom: {
+                                pan: {
+                                    enabled: true,
+                                    mode: 'xy'
+                                },
                                 zoom: {
                                     wheel: {
                                         enabled: true
@@ -904,7 +909,7 @@
                                     pinch: {
                                         enabled: true
                                     },
-                                    mode: "x"
+                                    mode: "xy"
                                 }
                             }
                         }
