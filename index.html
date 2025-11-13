@@ -3,10 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>ECU</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -808,7 +809,7 @@
 
             // --- Settings inputs ---
             const chartSelectInput = document.getElementById('chart-select');
-            const toothTypeInput = document.getElementById('tooth-type');            
+            const toothTypeInput = document.getElementById('tooth-type');
             const ignPowerInput = document.getElementById('ignition-power');
             const rpmSetpInput = document.getElementById('rpm-setp');
             const rpmMaxInput = document.getElementById('rpm-max');
@@ -837,8 +838,10 @@
             const SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214";
             const RX_CHAR_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214";
             const TX_CHAR_UUID = "19b10002-e8f2-537e-4f6c-d104768a1214";
+            const PACKET_SAMPLE_COUNT = 255;    //256 sample; last sample used for size and Device ID
+            const PARAM_COUNT = 19;
             //----------------------------------------------------------------------------------------------  
-            const chartPointCount = 255 - 19;
+            const chartPointCount = (PACKET_SAMPLE_COUNT - PARAM_COUNT)*10;
             let chartData = Array(chartPointCount).fill(0);
             const ctx = document.getElementById('ecu-graph')?.getContext('2d');
             let ecuChart;
@@ -860,10 +863,33 @@
                         responsive: true,
                         animation: false,
                         scales: {
-                            x: { display: false },
+                            x: {
+                                min: 0,
+                                max: chartPointCount,
+                                grid: {
+                                    color: 'rgba(128,151,177, 0.3)',
+                                    borderDash: [3, 5],
+                                    drawTicks: false,
+                                    borderColor: '#424b5f'
+                                },
+                                ticks: {
+                                    align: "center",
+                                    padding: 10,
+                                }
+                            },
                             y: {
                                 min: 0,
-                                max: 60000
+                                max: 65000,
+                                grid: {
+                                    color: 'rgba(128,151,177, 0.3)',
+                                    borderDash: [3, 3],
+                                    drawTicks: false,
+                                    borderColor: '#424b5f',
+                                },
+                                ticks: {
+                                    align: "center",
+                                    padding: 10,
+                                },
                             }
                         },
                         plugins: {
@@ -917,7 +943,7 @@
 
             let engineSetting = {
                 chartSelect: parseInt(chartSelectInput.value),
-                toothType: parseInt(toothTypeInput.value),                
+                toothType: parseInt(toothTypeInput.value),
                 ignPower: parseInt(ignPowerInput.value),
                 startTpsDegX10: parseInt(startTpsDegInput.value * 10),
                 warmupDuration: parseInt(warmupDurationInput.value),
@@ -947,7 +973,7 @@
 
             // Update Settings when inputs change
             chartSelectInput.addEventListener('change', () => engineSetting.chartSelect = parseInt(chartSelectInput.value));
-            toothTypeInput.addEventListener('change', () => engineSetting.toothType = parseInt(toothTypeInput.value));            
+            toothTypeInput.addEventListener('change', () => engineSetting.toothType = parseInt(toothTypeInput.value));
             ignPowerInput.addEventListener('change', () => engineSetting.ignPower = parseInt(ignPowerInput.value));
             startTpsDegInput.addEventListener('change', () => engineSetting.startTpsDegX10 = parseInt(startTpsDegInput.value * 10));
             warmupDurationInput.addEventListener('change', () => engineSetting.warmupDuration = parseInt(warmupDurationInput.value));
@@ -1130,7 +1156,7 @@
                                 packetByteIndex += 2;
                             }
                             chartSelectInput.value = engineSetting.chartSelect;
-                            toothTypeInput.value = engineSetting.toothType;                            
+                            toothTypeInput.value = engineSetting.toothType;
                             ignPowerInput.value = engineSetting.ignPower;
                             rpmSetpInput.value = engineSetting.rpmSetp;
                             rpmMaxInput.value = engineSetting.rpmMax;
