@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>ECU</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
-    <script src="https://hammerjs.github.io/dist/hammer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.1.0"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -79,20 +79,22 @@
             flex-direction: row;
             gap: 10px;
             flex-grow: 1;
-            min-height: 0;
+            min-height: auto;
         }
 
         .left-controls {
             flex: 3;
             display: flex;
             flex-direction: column;
-            gap: 0px;
+            gap: 10px;
             background-color: #1c2541;
             padding: 15px;
             border-radius: 8px;
             border: 1px solid #3a506b;
             min-width: 0;
             overflow: hidden;
+            flex-grow: 1;
+            min-height: 400px;
         }
 
         .control-buttons-major {
@@ -101,7 +103,6 @@
             gap: 10px;
             margin-bottom: 10px;
             flex-shrink: 0;
-
         }
 
         .control-button {
@@ -134,7 +135,6 @@
         .start-btn {
             background-color: #2a9d8f;
             border-color: #2a9d8f;
-            /*margin-right: 10%;*/
         }
 
         .stop-btn {
@@ -142,18 +142,7 @@
             border-color: #e76f51;
         }
 
-        .arrow-btn {
-            background-color: #007bff;
-            border-color: #007bff;
-
-            svg {
-                width: 100%;
-                height: 100%;
-            }
-        }
-
-
-        .graph-area {
+        .chart-area {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
@@ -163,12 +152,12 @@
             padding: 10px;
             min-width: 0;
             min-height: 0;
-            max-height: auto;
             overflow: hidden;
+            touch-action: none !important;
+            height: 100%;
         }
 
-
-        .graph-header {
+        .chart-header {
             color: #ccc;
             font-size: 0.9em;
             text-align: center;
@@ -176,22 +165,24 @@
             flex-shrink: 0;
         }
 
+        /* FIX: Ensure the div wrapping the canvas grows vertically */
+        .chart-area>div {
+            flex-grow: 1;
+            min-height: 0;
+        }
+
         canvas {
             touch-action: pan-y !important;
-            /* let the chart capture gestures */
             user-select: none;
         }
 
-        #ecu-graph {
-            width: 100%;
-            height: 100%;
+        #ecu-chart {
             flex-grow: 1;
             touch-action: none !important;
-            /* allow Chart.js to capture pinch gestures */
         }
 
         .right-panel {
-            flex: 1.5;
+            flex: 0.25;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -331,8 +322,8 @@
             padding: 8px;
             flex-grow: 1;
             width: auto;
-            max-width: 200px;
-            min-width: 200px;
+            max-width: 120px;
+            min-width: 100px;
             font-size: 1em;
         }
 
@@ -373,12 +364,9 @@
 
         .control-label {
             font-family: sans-serif;
-            /* Use a readable font */
-            font-size: 16px;
+            font-size: 0.9em;
             margin-bottom: 8px;
-            /* Adds space between the label and the switch */
             color: #dce7de;
-            /* Darker text color */
         }
 
         .switch {
@@ -489,18 +477,26 @@
                 padding: 8px 5px;
             }
 
+            /* Keep label and input side-by-side on small screens */
             .setting-item {
-                flex-direction: column;
-                align-items: flex-start;
+                flex-direction: row;
+                align-items: center;
+                flex-wrap: nowrap;
             }
 
             .setting-item label {
-                flex-basis: auto;
-                margin-bottom: 5px;
+                flex-basis: 100px;
+                min-width: 100px;
+                margin-bottom: 0;
             }
 
             .settings-group h3 {
                 font-size: 1.1em;
+            }
+
+            .control-button {
+                width: 60px;
+                height: 60px;
             }
         }
     </style>
@@ -509,34 +505,6 @@
 <body>
     <div class="container" id="main-app-container">
         <div class="top-panel">
-            <div class="display-box">
-                <label>EGT (°C)</label>
-                <div id="egt-display" class="value-display green-text">0</div>
-            </div>
-            <div class="display-box">
-                <label>HWT (°C)</label>
-                <div id="hwt-display" class="value-display green-text">0.0</div>
-            </div>
-            <div class="display-box">
-                <label>CWT (°C)</label>
-                <div id="cwt-display" class="value-display green-text">0.0</div>
-            </div>
-            <div class="display-box">
-                <label>IAT (°C)</label>
-                <div id="iat-display" class="value-display green-text">0.0</div>
-            </div>
-            <div class="display-box">
-                <label>MAP (bar)</label>
-                <div id="map-display" class="value-display green-text">0.00</div>
-            </div>
-            <div class="display-box">
-                <label>OIL (bar)</label>
-                <div id="oil-display" class="value-display green-text">0.0</div>
-            </div>
-            <div class="display-box">
-                <label>GAS (bar)</label>
-                <div id="gas-display" class="value-display green-text">0.0</div>
-            </div>
             <div class="display-box">
                 <label>BAT (V)</label>
                 <div id="bat-display" class="value-display green-text">0.00</div>
@@ -608,10 +576,10 @@
                     </div>
 
                 </div>
-                <div class="graph-area">
-                    <div class="graph-header">Parameter / Time (msec)</div>
+                <div class="chart-area">
+                    <div class="chart-header">Parameter / Time (msec)</div>
                     <div>
-                        <canvas id="ecu-graph"></canvas>
+                        <canvas id="ecu-chart"></canvas>
                     </div>
                 </div>
             </div>
@@ -622,18 +590,11 @@
                 </div>
 
                 <div class="tab-navigation">
-                    <button class="tab-button" data-target-panel="commands-panel">Command</button>
                     <button class="tab-button" data-target-panel="settings-panel">Setting</button>
                     <button class="tab-button" data-target-panel="speed-panel">Speed</button>
                 </div>
 
                 <div class="tab-content-container">
-                    <div id="commands-panel" class="tab-panel active">
-                        <div class="settings-group">
-                            <h3>Engine Commands</h3>
-                        </div>
-                    </div>
-
                     <div id="settings-panel" class="tab-panel">
                         <div class="settings-group">
                             <h3>Engine Setting</h3>
@@ -783,13 +744,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- Display Elements ---
-            const egtDisplay = document.getElementById('egt-display');
-            const hwtDisplay = document.getElementById('hwt-display');
-            const cwtDisplay = document.getElementById('cwt-display');
-            const iatDisplay = document.getElementById('iat-display');
-            const mapDisplay = document.getElementById('map-display');
-            const oilDisplay = document.getElementById('oil-display');
-            const gasDisplay = document.getElementById('gas-display');
             const batDisplay = document.getElementById('bat-display');
             const vccDisplay = document.getElementById('vcc-display');
             const tpsDisplay = document.getElementById('tps-display');
@@ -807,9 +761,9 @@
 
             // --- Tab Elements ---
             const tabButtons = document.querySelectorAll('.tab-button');
-            const commandsPanel = document.getElementById('commands-panel');
-            const settingsPanel = document.getElementById('settings-panel');
-            const speedPanel = document.getElementById('speed-panel');
+            // settingsPanel and speedPanel are not used as variables, only by ID in showTab
+            // const settingsPanel = document.getElementById('settings-panel');
+            // const speedPanel = document.getElementById('speed-panel');
 
             // --- Connect BLE Button ---
             const connectBleButton = document.getElementById('connect-ble-btn');
@@ -845,25 +799,27 @@
             const SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214";
             const RX_CHAR_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214";
             const TX_CHAR_UUID = "19b10002-e8f2-537e-4f6c-d104768a1214";
-            const PACKET_SAMPLE_COUNT = 255;    //256 sample; last sample used for size and Device ID
             const PARAM_COUNT = 19;
-            //----------------------------------------------------------------------------------------------  
-            const chartPointCount = (PACKET_SAMPLE_COUNT - PARAM_COUNT) * 10;
-            let chartData = Array(chartPointCount).fill(0);
-            const ctx = document.getElementById('ecu-graph')?.getContext('2d');
+            const PACKET_SAMPLE_COUNT = 255 - PARAM_COUNT; //256 sample; last sample used for size and Device ID
+            const CHART_PACKET_COUNT = 10;
+            const CHART_POINT_COUNT = PACKET_SAMPLE_COUNT * CHART_PACKET_COUNT;
+            //----------------------------------------------------------------------------------------------
+            let chartPacketIndex = 0;
+            let chartData = Array(CHART_POINT_COUNT).fill(0);
+            const ctx = document.getElementById('ecu-chart')?.getContext('2d');
             let ecuChart;
             if (ctx) {
                 ecuChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: Array.from({ length: chartPointCount }, (_, i) => i),
+                        labels: Array.from({ length: CHART_POINT_COUNT }, (_, i) => i),
                         datasets: [{
                             label: 'Signal',
                             data: chartData,
                             borderColor: 'lime',
                             borderWidth: 1,
                             pointRadius: 0,
-                            tension: 0
+                            tension: false
                         }]
                     },
                     options: {
@@ -871,13 +827,14 @@
                         animation: false,
                         scales: {
                             x: {
+                                type: 'linear',
                                 min: 0,
-                                max: chartPointCount,
+                                max: CHART_POINT_COUNT - 1,
                                 grid: {
                                     color: 'rgba(128,151,177, 0.3)',
                                     borderDash: [3, 5],
                                     drawTicks: false,
-                                    borderColor: '#424b5f'
+                                    borderColor: '#424b5f',
                                 },
                                 ticks: {
                                     align: "center",
@@ -886,12 +843,12 @@
                             },
                             y: {
                                 min: 0,
-                                max: 65000,
+                                max: 70000,
                                 grid: {
                                     color: 'rgba(128,151,177, 0.3)',
                                     borderDash: [3, 3],
                                     drawTicks: false,
-                                    borderColor: '#424b5f',
+                                    borderColor: '#424b5f'
                                 },
                                 ticks: {
                                     align: "center",
@@ -923,9 +880,9 @@
                     }
                 });
             }
-            //document.getElementById('ecu-graph').addEventListener('click', () => {
-                //ecuChart.resetZoom();
-            //});
+            document.getElementById('ecu-chart').addEventListener('click', () => {
+                ecuChart.resetZoom();
+            });
             document.getElementById('zoom-mode').addEventListener('change', function () {
                 if (ecuChart) {
                     const mode = this.value;
@@ -935,8 +892,8 @@
                     }
                 }
             });
-            //----------------------------------------------------------------------------------------------  
-            const BUZZER_BEEP_CMD = 0x80;
+            //----------------------------------------------------------------------------------------------
+            const BUZZER_BEEP_CMD = 0x80; // Not used but left as a constant
             const GET_SETTING_CMD = 0x81;
             const SAVE_SETTING_CMD = 0x82;
             let isCharting = false;
@@ -944,14 +901,9 @@
             let deviceSerialNo = 0;
             let bleDevice;
             let txCharacteristic;
-            let time = 0;
+            // let time = 0; // Unused variable
             let settingChangedFlag = false;
-            let commandChangedFlag = false;
             let chartCapture = 2;
-
-            let engineCommand = {
-                manTpsSetpX10: parseInt(manTpsSetpInput.value * 10)
-            };
 
             let engineSetting = {
                 chartSelect: parseInt(chartSelectInput.value),
@@ -974,14 +926,11 @@
             let oldEngineSetting = { ...engineSetting };
             // Map setting names to numeric indexes automatically
             const settingKeys = Object.keys(engineSetting);
-            const settingMap = settingKeys.reduce((map, key, idx) => {
-                map[key] = idx;
-                return map;
-            }, {});
+            const SETTING_COUNT = settingKeys.length; // Not used for logic, but keeps original context
+            // const settingMap = settingKeys.reduce((map, key, idx) => { ... }, {}); // settingMap is unused
             // Preallocate maximum possible buffer (3 bytes per setting)
-            const SETTING_COUNT = settingKeys.length;
             const sendBuff = new Uint8Array(SETTING_COUNT * 3);
-            let sendLength = 0;  // tracks how much of the buffer is used
+            let sendLength = 0; // tracks how much of the buffer is used
 
             // Update Settings when inputs change
             chartSelectInput.addEventListener('change', () => engineSetting.chartSelect = parseInt(chartSelectInput.value));
@@ -1000,28 +949,28 @@
             trtKpInput.addEventListener('change', () => engineSetting.trtKp = parseInt(trtKpInput.value));
             trtKiInput.addEventListener('change', () => engineSetting.trtKi = parseInt(trtKiInput.value));
             trtKdInput.addEventListener('change', () => engineSetting.trtKd = parseInt(trtKdInput.value));
-            // Update Commands when inputs change
+            // Update Numeric Commands when inputs change
             manTpsSetpInput.addEventListener('change', () => {
                 if (sendLength == 0) {
                     const cmdVal = parseInt(manTpsSetpInput.value * 10);
-                    sendBuff[0] = (64 + 2);        // command index
-                    sendBuff[1] = (cmdVal >> 8);   // high byte
-                    sendBuff[2] = cmdVal & 0xFF;   // low byte  
+                    sendBuff[0] = (64 + 2); // command index
+                    sendBuff[1] = (cmdVal >> 8); // high byte
+                    sendBuff[2] = cmdVal & 0xFF; // low byte  
                     sendLength = 3;
                 }
             });
             simSpeedSetpInput.addEventListener('change', () => {
                 if (sendLength == 0) {
                     const cmdVal = parseInt(simSpeedSetpInput.value);
-                    sendBuff[0] = (64 + 3);        // command index
-                    sendBuff[1] = (cmdVal >> 8);   // high byte
-                    sendBuff[2] = cmdVal & 0xFF;   // low byte  
+                    sendBuff[0] = (64 + 3); // command index
+                    sendBuff[1] = (cmdVal >> 8); // high byte
+                    sendBuff[2] = cmdVal & 0xFF; // low byte  
                     sendLength = 3;
                 }
             });
             //---------------------------------------------------------------------------------------------- 
 
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             function showTab(panelId) {
                 tabButtons.forEach(button => button.classList.remove('active'));
                 document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
@@ -1030,14 +979,14 @@
                 const targetPanel = document.getElementById(panelId);
                 if (targetPanel) targetPanel.classList.add('active');
             }
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             tabButtons.forEach(button => {
                 button.addEventListener('click', (event) => {
                     showTab(event.target.dataset.targetPanel);
                 });
             });
             showTab('settings-panel');
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             async function connectToBleDevice() {
                 try {
                     console.log('Requesting Bluetooth Device...');
@@ -1074,7 +1023,7 @@
                     updateConnectButtonUI();
                 }
             }
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             // 300ms
             function handleNotifications(event) {
                 if (sendLength > 0) {
@@ -1100,27 +1049,8 @@
                     //timeDisplay.textContent = packetSize;
                     if ((lastWord & 0x80) == 0) {
                         if (packetSize > 10) {
-                            const egt = dataView.getUint16(packetByteIndex, true);
-                            egtDisplay.textContent = egt;
-                            packetByteIndex += 2;
-                            const hwt = dataView.getInt16(packetByteIndex, true);
-                            hwtDisplay.textContent = (hwt * 0.1).toFixed(1);
-                            packetByteIndex += 2;
-                            const cwt = dataView.getInt16(packetByteIndex, true);
-                            cwtDisplay.textContent = (cwt * 0.1).toFixed(1);
-                            packetByteIndex += 2;
-                            const iat = dataView.getInt16(packetByteIndex, true);
-                            iatDisplay.textContent = (iat * 0.1).toFixed(1);
-                            packetByteIndex += 2;
-                            const map = dataView.getUint16(packetByteIndex, true);
-                            mapDisplay.textContent = (map * 0.01).toFixed(2);
-                            packetByteIndex += 2;
-                            const oil = dataView.getUint16(packetByteIndex, true);
-                            oilDisplay.textContent = (oil * 0.01).toFixed(2);
-                            packetByteIndex += 2;
-                            const gas = dataView.getUint16(packetByteIndex, true);
-                            gasDisplay.textContent = (gas * 0.01).toFixed(2);
-                            packetByteIndex += 2;
+                            // Skip the first 7 data points (7 * 2 bytes = 14 bytes) that are not displayed in the top panel
+                            packetByteIndex += 14;
                             const vbat = dataView.getUint16(packetByteIndex, true);
                             batDisplay.textContent = (vbat * 0.01).toFixed(2);
                             packetByteIndex += 2;
@@ -1152,9 +1082,16 @@
                                 if (ecuChart) {
                                     //if (chartCapture != 0) {
                                     //    chartCapture--;
-                                    for (let i = 0; i < chartPointCount; i++) {
-                                        chartData[i] = dataView.getUint16(i * 2, true);
+                                    let j = chartPacketIndex * PACKET_SAMPLE_COUNT;
+                                    for (let i = 0; i < PACKET_SAMPLE_COUNT; i++) {
+                                        chartData[i + j] = dataView.getUint16(i * 2, true);
                                     }
+                                    if (++chartPacketIndex == CHART_PACKET_COUNT) {
+                                        chartPacketIndex = 0;
+                                    }
+                                    j = chartPacketIndex * PACKET_SAMPLE_COUNT;
+                                    const rotated = chartData.slice(j).concat(chartData.slice(0, j));
+                                    ecuChart.data.datasets[0].data = rotated;
                                     ecuChart.update('none');
                                     //}
                                 }
@@ -1191,7 +1128,7 @@
                     }
                 }
             }
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             async function sendCmd(cmd) {
                 if (!isWebBLEConnected || !txCharacteristic) {
                     console.error("Not connected or TX Characteristic not available.");
@@ -1206,20 +1143,20 @@
                     console.error("Failed to send command:", error);
                 }
             }
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             function onDisconnected() {
                 console.log('Device disconnected.');
                 isWebBLEConnected = false;
                 txCharacteristic = null;
                 updateConnectButtonUI();
             }
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             function disconnectFromBleDevice() {
                 if (bleDevice && bleDevice.gatt.connected) {
                     bleDevice.gatt.disconnect();
                 }
             }
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             function updateConnectButtonUI() {
                 if (isWebBLEConnected) {
                     connectBleButton.textContent = 'Disconnect';
@@ -1229,7 +1166,7 @@
                     connectBleButton.classList.remove('disconnect');
                 }
             }
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             startButton.addEventListener('click', () => {
                 if (!isWebBLEConnected) {
                     alert("Please connect to the BLE device first.");
@@ -1237,58 +1174,29 @@
                 }
                 if (isCharting) return;
 
-                //console.log('Chart Started');
-                /*
-                tmaxValue.textContent = '0.0';
-                tminValue.textContent = '0.000';
-                detaTvalue.textContent = '0.0';
-                durationValue.textContent = '0.000';
-                heatValue.textContent = '0.000';
-                */
                 if (ecuChart) {
-                    //ecuChart.data.labels = [];
-                    //ecuChart.data.datasets[0].data = [];
-                    //ecuChart.update();
                     isCharting = true;
                     startButton.style.visibility = "hidden";
                     stopButton.style.visibility = "visible";
                 }
             });
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             stopButton.addEventListener('click', () => {
 
                 if (!isCharting) return;
 
-                //console.log('Chart Stopped');
-                /*
-                tmaxValue.textContent = '0.0';
-                tminValue.textContent = '0.000';
-                detaTvalue.textContent = '0.0';
-                durationValue.textContent = '0.000';
-                heatValue.textContent = '0.000';
-                */
                 if (ecuChart) {
-                    //ecuChart.data.labels = [];
-                    //ecuChart.data.datasets[0].data = [];
-                    //ecuChart.update();
                     isCharting = false;
                     stopButton.style.visibility = "hidden";
                     startButton.style.visibility = "visible";
                 }
             });
-            //----------------------------------------------------------------------------------------------  
+            //----------------------------------------------------------------------------------------------
             engineToggle.addEventListener('change', () => {
-                if (isCharting) return;
-                if (engineToggle.checked) {
-                    //sendData();
-                } else {
-                    //sendData();
-                }
+                // The original logic was commented out, so this listener remains empty but active for future use.
             });
             //----------------------------------------------------------------------------------------------
-            function getSettingIndex(key) {
-                return Object.keys(settingMap).indexOf(key);
-            }
+            // function getSettingIndex(key) { ... } // Unused function
             //----------------------------------------------------------------------------------------------
             applySettingButton.addEventListener('click', () => {
                 let offset = 0; // start at beginning
@@ -1298,9 +1206,9 @@
                     const oldVal = oldEngineSetting[key];
                     if (newVal !== oldVal) {
                         settingChangedFlag = true;
-                        sendBuff[offset++] = i;               // index
-                        sendBuff[offset++] = (newVal >> 8);   // high byte
-                        sendBuff[offset++] = newVal & 0xFF;   // low byte                        
+                        sendBuff[offset++] = i; // index
+                        sendBuff[offset++] = (newVal >> 8); // high byte
+                        sendBuff[offset++] = newVal & 0xFF; // low byte                        
                         oldEngineSetting[key] = newVal;
                     }
                 }
