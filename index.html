@@ -561,17 +561,17 @@
                     </div>
                     <div class="setting-item">
                         <select id="zoom-mode">
-                            <option value="xy">xy</option>
-                            <option value="x">x</option>
-                            <option value="y">y</option>
+                            <option value="y">Y</option>
+                            <option value="x">X</option>
+                            <option value="xy">XY</option>
                         </select>
                     </div>
                     <div class="setting-item">
                         <select id="state-display">
                             <option value="0">INIT</option>
                             <option value="1">READY</option>
-                            <option value="2">WARMUP</option>
-                            <option value="3">RUNNING</option>
+                            <option value="2">RUNNING</option>
+                            <option value="3">STOP</option>
                         </select>
                     </div>
 
@@ -863,7 +863,7 @@
                             zoom: {
                                 pan: {
                                     enabled: true,
-                                    mode: 'xy',
+                                    mode: 'y',
                                     modifierKey: null
                                 },
                                 zoom: {
@@ -873,7 +873,7 @@
                                     pinch: {
                                         enabled: true
                                     },
-                                    mode: "xy"
+                                    mode: "y"
                                 }
                             }
                         }
