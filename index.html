@@ -553,13 +553,6 @@
                             <path d="M6 6h12v12H6z" />
                         </svg>
                     </button>
-                    <div class="engine-control-container">
-                        <div class="control-label">Engine</div>
-                        <label class="switch">
-                            <input type="checkbox" id="engine-toggle">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
                     <div class="setting-item">
                         <select id="zoom-mode">
                             <option value="y">Y</option>
@@ -719,7 +712,7 @@
                                 </select>
                             </div>
                             <div class="setting-item">
-                                <label for="man-tps-setp">Man TPS Setpoint (deg)</label>
+                                <label for="man-tps-setp">Manual TPS (deg)</label>
                                 <input type="number" id="man-tps-setp" value="0.0" step="0.1" min="0.0" max="90.0">
                             </div>
                             <div class="setting-item">
@@ -765,7 +758,7 @@
             const startButton = document.getElementById('start-button');
             const stopButton = document.getElementById('stop-button');
 
-            const engineToggle = document.getElementById('engine-toggle');
+            //const engineToggle = document.getElementById('engine-toggle');
 
             // --- Tab Elements ---
             const tabButtons = document.querySelectorAll('.tab-button');
@@ -1151,6 +1144,11 @@
 							feedbackTypeInput.value = 0;
 							simSpeedSetpInput.value = 0;
 							manTpsSetpInput.value = 0.0;
+							console.log(`UID0: ${dataView.getUint32(packetByteIndex, true)}`);
+							packetByteIndex += 4;
+							console.log(`UID1: ${dataView.getUint32(packetByteIndex, true)}`);
+							packetByteIndex += 4;
+							console.log(`UID2: ${dataView.getUint32(packetByteIndex, true)}`);
                         }
                     }
                 }
@@ -1219,9 +1217,9 @@
                 }
             });
             //----------------------------------------------------------------------------------------------
-            engineToggle.addEventListener('change', () => {
+            //engineToggle.addEventListener('change', () => {
                 // The original logic was commented out, so this listener remains empty but active for future use.
-            });
+            //});
             //----------------------------------------------------------------------------------------------
             // function getSettingIndex(key) { ... } // Unused function
             //----------------------------------------------------------------------------------------------
