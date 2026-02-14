@@ -641,13 +641,19 @@
                             <div class="setting-item">
                                 <label for="tooth-type">Tooth Type</label>
                                 <select id="tooth-type">
-                                    <option value="0">4+1</option>
-                                    <option value="1">5+1</option>
-                                    <option value="2">6+1</option>
-                                    <option value="3">6+2</option>
-                                    <option value="4">8+1</option>
-                                    <option value="5">12+1</option>
+                                    <option value="0">Standard</option>
+                                    <option value="1">Std + Cam</option>
+                                    <option value="2">Scania T1</option>
+									<option value="3">Scania T2</option>
                                 </select>
+                            </div>
+                            <div class="setting-item">
+                                <label for="cylinder-count">Cylinder Count</label>
+                                <input type="number" id="cylinder-count" value="4" step="1" min="1" max="16">
+                            </div>
+                            <div class="setting-item">
+                                <label for="tooth-count">Tooth Count of Standard</label>
+                                <input type="number" id="tooth-count" value="5" step="1" min="4" max="60">
                             </div>
                             <div class="setting-item">
                                 <label for="ignition-power">Ignition Power (%)</label>
@@ -688,7 +694,7 @@
                         <div class="settings-group">
                             <h3>Speed PID</h3>
                             <div class="setting-item">
-                                <label for="sim-rpm-setp">Sim Speed Setpoint (rpm)</label>
+                                <label for="sim-rpm-setp">Sim Speed (rpm)</label>
                                 <input type="number" id="sim-rpm-setp" value="0" step="1" min="0" max="1600">
                             </div>
                             <div class="setting-item">
@@ -708,7 +714,8 @@
                                 <label for="feedback-type">Feedback Type</label>
                                 <select id="feedback-type">
                                     <option value="0">TPS</option>
-                                    <option value="1">TRT</option>
+                                    <option value="1">TRT+TPS</option>
+									<option value="2">TRT</option>
                                 </select>
                             </div>
                             <div class="setting-item">
@@ -772,6 +779,8 @@
             // --- Settings inputs ---
             const chartSelectInput = document.getElementById('chart-select');
             const toothTypeInput = document.getElementById('tooth-type');
+			const cylCountInput = document.getElementById('cylinder-count');
+			const toothCountInput = document.getElementById('tooth-count');
             const ignPowerInput = document.getElementById('ignition-power');
             const rpmSetpInput = document.getElementById('rpm-setp');
             const rpmMaxInput = document.getElementById('rpm-max');
@@ -791,6 +800,7 @@
             // --- Commands inputs ---
             const manTpsSetpInput = document.getElementById('man-tps-setp');
             const simSpeedSetpInput = document.getElementById('sim-rpm-setp');
+			const feedbackTypeInput = document.getElementById('feedback-type');
 
             // --- Setting Management Buttons ---
             const applySettingButton = document.getElementById('apply-setting-button');
@@ -922,7 +932,9 @@
                 speedKd: parseInt(speedKdInput.value),
                 trtKp: parseInt(trtKpInput.value),
                 trtKi: parseInt(trtKiInput.value),
-                trtKd: parseInt(trtKdInput.value)
+                trtKd: parseInt(trtKdInput.value),
+				cylCount: parseInt(cylCountInput.value),
+				toothCount: parseInt(toothCountInput.value)
             };
             let oldEngineSetting = { ...engineSetting };
             // Map setting names to numeric indexes automatically
@@ -936,6 +948,8 @@
             // Update Settings when inputs change
             chartSelectInput.addEventListener('change', () => engineSetting.chartSelect = parseInt(chartSelectInput.value));
             toothTypeInput.addEventListener('change', () => engineSetting.toothType = parseInt(toothTypeInput.value));
+			cylCountInput.addEventListener('change', () => engineSetting.cylCount = parseInt(cylCountInput.value));
+			toothCountInput.addEventListener('change', () => engineSetting.toothCount = parseInt(toothCountInput.value));
             ignPowerInput.addEventListener('change', () => engineSetting.ignPower = parseInt(ignPowerInput.value));
             startTpsDegInput.addEventListener('change', () => engineSetting.startTpsDegX10 = parseInt(startTpsDegInput.value * 10));
             warmupDurationInput.addEventListener('change', () => engineSetting.warmupDuration = parseInt(warmupDurationInput.value));
@@ -951,7 +965,7 @@
             trtKiInput.addEventListener('change', () => engineSetting.trtKi = parseInt(trtKiInput.value));
             trtKdInput.addEventListener('change', () => engineSetting.trtKd = parseInt(trtKdInput.value));
             // Update Numeric Commands when inputs change
-            manTpsSetpInput.addEventListener('change', () => {
+             manTpsSetpInput.addEventListener('change', () => {
                 if (sendLength == 0) {
                     const cmdVal = parseInt(manTpsSetpInput.value * 10);
                     sendBuff[0] = (64 + 2); // command index
@@ -969,8 +983,15 @@
                     sendLength = 3;
                 }
             });
-            //---------------------------------------------------------------------------------------------- 
-
+           feedbackTypeInput.addEventListener('change', () => {
+                if (sendLength == 0) {
+                    const cmdVal = parseInt(feedbackTypeInput.value);
+                    sendBuff[0] = (64 + 4); // command index
+                    sendBuff[1] = (cmdVal >> 8); // high byte
+                    sendBuff[2] = cmdVal & 0xFF; // low byte  
+                    sendLength = 3;
+                }
+            });
             //----------------------------------------------------------------------------------------------
             function showTab(panelId) {
                 tabButtons.forEach(button => button.classList.remove('active'));
@@ -1107,6 +1128,8 @@
                             }
                             chartSelectInput.value = engineSetting.chartSelect;
                             toothTypeInput.value = engineSetting.toothType;
+							cylCountInput.value = engineSetting.cylCount;
+							toothCountInput.value = engineSetting.toothCount;
                             ignPowerInput.value = engineSetting.ignPower;
                             rpmSetpInput.value = engineSetting.rpmSetp;
                             rpmMaxInput.value = engineSetting.rpmMax;
@@ -1125,6 +1148,9 @@
                             oldEngineSetting = { ...engineSetting };
                             deviceSerialNo = (lastWord >> 8);
                             connectBleButton.textContent = connectBleButton.textContent + ' from ' + deviceSerialNo;
+							feedbackTypeInput.value = 0;
+							simSpeedSetpInput.value = 0;
+							manTpsSetpInput.value = 0.0;
                         }
                     }
                 }
@@ -1237,4 +1263,3 @@
 </body>
 
 </html>
-
